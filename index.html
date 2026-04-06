@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gửi File&Tin nhắn | KietPhan</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --text: #e8e8f0;
+      --muted: #888899;
+      --success: #4ade80;
+      --error: #f87171
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 20% 20%, rgba(108, 99, 255, .12) 0%, transparent 60%), radial-gradient(ellipse 60% 60% at 80% 80%, rgba(255, 101, 132, .08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+      animation: fadeUp .7s cubic-bezier(.22, 1, .36, 1) both
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(32px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 36px
+    }
+
+    .logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      background: linear-gradient(135deg, #fff 40%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text
+    }
+
+    .logo p {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-top: 4px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+      position: relative;
+      overflow: hidden
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(108, 99, 255, .5), rgba(255, 101, 132, .3), transparent)
+    }
+
+    /* Telegram message box */
+    .tg-box {
+      background: rgba(108, 99, 255, .06);
+      border: 1px solid rgba(108, 99, 255, .2);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 28px
+    }
+
+    .tg-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px
+    }
+
+    .tg-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px var(--success);
+      animation: blink 2s ease-in-out infinite
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .tg-header-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      font-weight: 500;
+      flex: 1
+    }
+
+    .tg-refresh {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      transition: color .15s
+    }
+
+    .tg-refresh:hover {
+      color: var(--accent)
+    }
+
+    .tg-refresh svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .tg-messages {
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .tg-messages::-webkit-scrollbar {
+      width: 4px
+    }
+
+    .tg-messages::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px
+    }
+
+    .tg-msg {
+      background: rgba(255, 255, 255, .04);
+      border-radius: 10px;
+      padding: 8px 12px
+    }
+
+    .tg-msg-text {
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.5;
+      word-break: break-word
+    }
+
+    .tg-msg-time {
+      font-size: 11px;
+      color: #44445a;
+      margin-top: 3px
+    }
+
+    .tg-empty {
+      font-size: 13px;
+      color: #44445a;
+      text-align: center;
+      padding: 10px 0;
+      font-style: italic
+    }
+
+    .tg-msg-img {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 6px;
+      display: block;
+      transition: opacity .2s, transform .2s;
+      object-fit: cover
+    }
+
+    .tg-msg-img:hover {
+      opacity: .88;
+      transform: scale(1.01)
+    }
+
+    .tg-msg-caption {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-style: italic
+    }
+
+    /* Lightbox */
+    .lb-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .88);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      animation: fadeIn .2s ease
+    }
+
+    .lb-overlay.open {
+      display: flex
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .lb-img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 14px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, .7);
+      animation: zoomIn .25s cubic-bezier(.22, 1, .36, 1)
+    }
+
+    @keyframes zoomIn {
+      from {
+        transform: scale(.88);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .lb-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      background: rgba(255, 255, 255, .1);
+      border: none;
+      color: white;
+      font-size: 26px;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s
+    }
+
+    .lb-close:hover {
+      background: rgba(255, 255, 255, .22)
+    }
+
+    .field {
+      margin-bottom: 20px
+    }
+
+    label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 8px
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      resize: vertical;
+      min-height: 90px
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, .15)
+    }
+
+    textarea::placeholder {
+      color: #44445a
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      background: var(--surface);
+      position: relative
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, .05)
+    }
+
+    .drop-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%
+    }
+
+    .drop-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(108, 99, 255, .12);
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px
+    }
+
+    .drop-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .drop-zone h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px
+    }
+
+    .drop-zone p {
+      font-size: 12.5px;
+      color: var(--muted)
+    }
+
+    .file-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(108, 99, 255, .07);
+      border: 1px solid rgba(108, 99, 255, .15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      animation: slideIn .3s cubic-bezier(.22, 1, .36, 1)
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    .file-icon {
+      font-size: 18px
+    }
+
+    .file-name {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .file-size {
+      font-size: 12px;
+      color: var(--muted);
+      flex-shrink: 0
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color .15s
+    }
+
+    .remove-btn:hover {
+      color: var(--error)
+    }
+
+    .remove-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round
+    }
+
+    .send-btn {
+      width: 100%;
+      margin-top: 28px;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      cursor: pointer;
+      transition: all .25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 40px rgba(108, 99, 255, .5)
+    }
+
+    .send-btn:active {
+      transform: translateY(0)
+    }
+
+    .send-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none
+    }
+
+    .send-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .progress-wrap {
+      display: none;
+      margin-top: 16px;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      height: 6px
+    }
+
+    .progress-wrap.visible {
+      display: block
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      width: 0%;
+      transition: width .4s ease
+    }
+
+    .status-text {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 18px
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+      transition: transform .4s cubic-bezier(.22, 1, .36, 1), opacity .4s;
+      opacity: 0;
+      z-index: 100;
+      white-space: nowrap
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1
+    }
+
+    .toast.success {
+      border-color: rgba(74, 222, 128, .3)
+    }
+
+    .toast.error {
+      border-color: rgba(248, 113, 113, .3)
+    }
+
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .toast.success .toast-dot {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success)
+    }
+
+    .toast.error .toast-dot {
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error)
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: #55556a;
+      margin-top: 20px;
+      line-height: 1.6
+    }
+
+    @media(max-width:480px) {
+      .card {
+        padding: 24px 20px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <div class="logo">
+      <h1>Web nhắn tin và gủi file cho tôi</h1>
+
+    </div>
+
+    <div class="card">
+
+      <!-- Telegram messages -->
+      <div class="tg-box">
+        <div class="tg-header">
+          <div class="tg-dot"></div>
+          <span class="tg-header-label">xem tin nhắn chỗ đây tôi gủi nhé </span>
+          <button class="tg-refresh" onclick="loadMessages()" title="Làm mới">
+            <svg viewBox="0 0 24 24">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+          </button>
+        </div>
+        <div class="tg-messages" id="tgMessages">
+          <div class="tg-empty">Đang tải tin nhắn...</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Ní nhắn gì thì ghi vô đây è kkk</label>
+        <textarea id="message" placeholder="Ní nhập chỗ ây è..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Ní chọn file đi</label>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" multiple />
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <h3>Ní bấm vô ây nè rồi chọn file</h3>
+        </div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="status-text" id="statusText"></div>
+
+      <button class="send-btn" id="sendBtn" onclick="sendFiles()">
+        <svg viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+        Gửi Ngay
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-dot"></div>
+    <span id="toastMsg"></span>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lb-overlay" id="lbOverlay" onclick="closeLightbox()">
+    <button class="lb-close" onclick="closeLightbox()" title="Đóng">✕</button>
+    <img class="lb-img" id="lbImg" src="" alt="Ảnh" />
+  </div>
+
+  <script>
+    const BOT_TOKEN = '8681064766:AAG4KMSthwadIIVCllqMIW_Ag95McQgVVaI';
+    const CHAT_ID = '7986934932';
+    let selectedFiles = [];
+
+    // Load Telegram messages
+    let hiddenIds = JSON.parse(localStorage.getItem('hiddenIds') || '[]');
+
+    async function loadMessages() {
+      try {
+        const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=50');
+        const data = await res.json();
+        const box = document.getElementById('tgMessages');
+
+        // Lấy tất cả tin nhắn từ CHAT_ID (text + ảnh)
+        const allUpdates = (data.result || [])
+          .filter(u => u.message && u.message.chat.id == CHAT_ID);
+
+        // Xử lý lệnh /clear (chỉ áp dụng cho text)
+        const textMsgs = allUpdates.filter(u => u.message.text);
+        const clearCmd = textMsgs.filter(u => u.message.text.trim() === '/clear').pop();
+        if (clearCmd) {
+          const clearTime = clearCmd.message.date;
+          const toHide = allUpdates
+            .filter(u => u.message.date <= clearTime)
+            .map(u => u.update_id);
+          hiddenIds = [...new Set([...hiddenIds, ...toHide])];
+          localStorage.setItem('hiddenIds', JSON.stringify(hiddenIds));
+        }
+
+        // Lọc bỏ hiddenIds và /clear, lấy 6 tin mới nhất
+        const msgs = allUpdates
+          .filter(u => !hiddenIds.includes(u.update_id))
+          .filter(u => !(u.message.text && u.message.text.trim() === '/clear'))
+          .filter(u => u.message.text || u.message.photo) // chỉ hiện text và ảnh
+          .slice(-6).reverse();
+
+        if (msgs.length === 0) {
+          box.innerHTML = '<div class="tg-empty">Chưa có tin nhắn nào.</div>';
+          return;
+        }
+
+        box.innerHTML = '';
+        for (const u of msgs) {
+          const d = new Date(u.message.date * 1000);
+          const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN');
+          const div = document.createElement('div');
+          div.className = 'tg-msg';
+
+          if (u.message.photo) {
+            // Lấy ảnh chất lượng cao nhất (phần tử cuối)
+            const photo = u.message.photo[u.message.photo.length - 1];
+            const fileRes = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getFile?file_id=' + photo.file_id);
+            const fileData = await fileRes.json();
+            const imgUrl = 'https://api.telegram.org/file/bot' + BOT_TOKEN + '/' + fileData.result.file_path;
+            const caption = u.message.caption ? '<div class="tg-msg-caption">📝 ' + escapeHtml(u.message.caption) + '</div>' : '';
+            div.innerHTML = '<img class="tg-msg-img" src="' + imgUrl + '" alt="Ảnh" onclick="openLightbox(this.src)"/>' + caption + '<div class="tg-msg-time">📷 ' + time + '</div>';
+          } else {
+            div.innerHTML = '<div class="tg-msg-text">' + escapeHtml(u.message.text) + '</div><div class="tg-msg-time">' + time + '</div>';
+          }
+
+          box.appendChild(div);
+        }
+
+      } catch (e) {
+        document.getElementById('tgMessages').innerHTML = '<div class="tg-empty">Không thể tải tin nhắn.</div>';
+      }
+    }
+
+    function escapeHtml(t) {
+      return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function openLightbox(src) {
+      document.getElementById('lbImg').src = src;
+      document.getElementById('lbOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lbOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Đóng lightbox bằng phím Escape
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    loadMessages();
+    setInterval(loadMessages, 5000);
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(Array.from(e.dataTransfer.files)); });
+    fileInput.addEventListener('change', () => { handleFiles(Array.from(fileInput.files)); fileInput.value = ''; });
+
+    function handleFiles(files) {
+      files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      list.innerHTML = '';
+      selectedFiles.forEach((f, i) => {
+        const size = f.size > 1024 * 1024 ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : (f.size / 1024).toFixed(0) + ' KB';
+        const ext = f.name.split('.').pop().toLowerCase();
+        const icons = { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📋', pptx: '📋', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', mp4: '🎬', mp3: '🎵', zip: '📦', rar: '📦' };
+        const icon = icons[ext] || '📎';
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = '<span class="file-icon">' + icon + '</span><span class="file-name">' + f.name + '</span><span class="file-size">' + size + '</span><button class="remove-btn" onclick="removeFile(' + i + ')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        list.appendChild(item);
+      });
+    }
+
+    function removeFile(i) { selectedFiles.splice(i, 1); renderFileList(); }
+    function setStatus(t) { document.getElementById('statusText').textContent = t; }
+
+    // ── CÁCH 1: Gửi thẳng qua Telegram (file ≤ 50 MB) ──────────────────────
+    // Không cần dịch vụ trung gian, tải được trên điện thoại
+    function getTelegramMethod(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return { method: 'sendPhoto', field: 'photo' };
+      if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) return { method: 'sendVideo', field: 'video' };
+      if (['mp3', 'm4a', 'wav', 'flac'].includes(ext)) return { method: 'sendAudio', field: 'audio' };
+      return { method: 'sendDocument', field: 'document' };
+    }
+
+    async function sendFileToTelegram(file, caption, onProgress) {
+      return new Promise((resolve, reject) => {
+        const { method, field } = getTelegramMethod(file.name);
+        const fd = new FormData();
+        fd.append('chat_id', CHAT_ID);
+        if (caption) fd.append('caption', caption);
+        fd.append(field, file, file.name);
+        const xhr = new XMLHttpRequest();
+        const startTime = Date.now();
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
+            const speed = e.loaded / elapsed;
+            const rem = (e.total - e.loaded) / speed;
+            const timeStr = rem < 60 ? Math.ceil(rem) + 's' : Math.ceil(rem / 60) + 'ph';
+            const speedStr = speed > 1024 * 1024 ? (speed / 1024 / 1024).toFixed(1) + ' MB/s' : (speed / 1024).toFixed(0) + ' KB/s';
+            onProgress(pct, speedStr, timeStr);
+          }
+        });
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.ok) resolve(data.result);
+            else reject(new Error(data.description || 'Telegram từ chối file'));
+          } catch (e) { reject(e); }
+        };
+        xhr.onerror = () => reject(new Error('Lỗi mạng'));
+        xhr.open('POST', 'https://api.telegram.org/bot' + BOT_TOKEN + '/' + method);
+        xhr.send(fd);
+      });
+    }
+
+    // ── CÁCH 2: Upload Gofile (file > 50 MB) ─────────────────────────────────
+    // Gửi link tải xuống để xem/tải trên máy tính
+    async function getGofileServer() {
+      const res = await fetch('https://api.gofile.io/servers');
+      const data = await res.json();
+      return data.data.servers[0].name;
+    }
+
+    async function uploadToGofile(file, server, onProgress) {
+      return new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        const xhr = new XMLHttpRequest();
+        const startTime = Date.now();
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
+            const speed = e.loaded / elapsed;
+            const rem = (e.total - e.loaded) / speed;
+            const timeStr = rem < 60 ? Math.ceil(rem) + 's' : Math.ceil(rem / 60) + 'ph';
+            const speedStr = speed > 1024 * 1024 ? (speed / 1024 / 1024).toFixed(1) + ' MB/s' : (speed / 1024).toFixed(0) + ' KB/s';
+            onProgress(pct, speedStr, timeStr);
+          }
+        });
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.status === 'ok') resolve(data.data.downloadPage);
+            else reject(new Error('Gofile upload thất bại'));
+          } catch (e) { reject(e); }
+        };
+        xhr.onerror = () => reject(new Error('Lỗi mạng'));
+        xhr.open('POST', 'https://' + server + '.gofile.io/contents/uploadfile');
+        xhr.send(fd);
+      });
+    }
+
+    // ── Gửi tin nhắn text ────────────────────────────────────────────────────
+    async function sendTelegram(text) {
+      await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
+      });
+    }
+
+    const LIMIT_MB = 50;  // Giới hạn Telegram Bot API
+
+    async function sendFiles() {
+      const message = document.getElementById('message').value.trim();
+      if (selectedFiles.length === 0 && !message) return showToast('Nhập tin nhắn hoặc chọn file!', 'error');
+
+      const btn = document.getElementById('sendBtn');
+      const progressWrap = document.getElementById('progressWrap');
+      const progressBar = document.getElementById('progressBar');
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang xử lý...';
+
+      try {
+        // Chỉ có tin nhắn
+        if (selectedFiles.length === 0 && message) {
+          await sendTelegram('💬 <b>Tin nhắn mới:</b>\n' + message);
+          showToast('✓ Đã gửi tin nhắn!', 'success');
+          document.getElementById('message').value = '';
+          btn.disabled = false;
+          btn.innerHTML = '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi Ngay';
+          return;
+        }
+
+        progressWrap.classList.add('visible');
+
+        // Chia file ra 2 nhóm
+        const smallFiles = selectedFiles.filter(f => f.size <= LIMIT_MB * 1024 * 1024);
+        const bigFiles = selectedFiles.filter(f => f.size > LIMIT_MB * 1024 * 1024);
+        const total = selectedFiles.length;
+        let done = 0;
+
+        // ── Nhóm nhỏ ≤ 50MB: gửi thẳng Telegram ──
+        for (let i = 0; i < smallFiles.length; i++) {
+          const file = smallFiles[i];
+          const caption = (done === 0 && message) ? '💬 ' + message : '';
+          setStatus('📱 ' + file.name + ' (' + (done + 1) + '/' + total + ') — gửi thẳng Telegram...');
+
+          await sendFileToTelegram(file, caption, (pct, speed, timeLeft) => {
+            const overall = (done / total * 100) + (pct / total);
+            progressBar.style.width = overall.toFixed(1) + '%';
+            setStatus('📱 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
+            btn.innerHTML = '<div class="spinner"></div> ' + pct + '%';
+          });
+
+          done++;
+          progressBar.style.width = (done / total * 100) + '%';
+        }
+
+        // ── Nhóm lớn > 50MB: upload Gofile, gửi link ──
+        if (bigFiles.length > 0) {
+          setStatus('🔗 File lớn — đang kết nối Gofile...');
+          const server = await getGofileServer();
+          const links = [];
+
+          for (let i = 0; i < bigFiles.length; i++) {
+            const file = bigFiles[i];
+            setStatus('💻 ' + file.name + ' (' + (done + 1) + '/' + total + ') — upload Gofile...');
+
+            const link = await uploadToGofile(file, server, (pct, speed, timeLeft) => {
+              const overall = (done / total * 100) + (pct / total);
+              progressBar.style.width = overall.toFixed(1) + '%';
+              setStatus('💻 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
+              btn.innerHTML = '<div class="spinner"></div> ' + pct + '%';
+            });
+
+            links.push({ name: file.name, size: (file.size / 1024 / 1024).toFixed(1) + ' MB', link });
+            done++;
+            progressBar.style.width = (done / total * 100) + '%';
+          }
+
+          // Gửi tin nhắn tổng hợp link file lớn
+          setStatus('Đang gửi thông báo link file lớn...');
+          let msg = '📦 <b>File lớn được gửi qua Gofile!</b>\n\n';
+          if (message && smallFiles.length === 0) msg += '💬 <b>Lời nhắn:</b> ' + message + '\n\n';
+          msg += '📎 <b>Danh sách:</b>\n';
+          links.forEach((f, idx) => { msg += (idx + 1) + '. <a href="' + f.link + '">' + f.name + '</a> (' + f.size + ')\n'; });
+          msg += '\n💻 Mở trên máy tính để tải xuống';
+          await sendTelegram(msg);
+        }
+
+        showToast('✓ Đã gửi tất cả ' + total + ' file!', 'success');
+        setStatus('');
+        selectedFiles = [];
+        renderFileList();
+        document.getElementById('message').value = '';
+        setTimeout(() => { progressWrap.classList.remove('visible'); progressBar.style.width = '0%'; }, 1500);
+
+      } catch (err) {
+        console.error(err);
+        showToast('Có lỗi: ' + (err.message || 'Thử lại nhé.'), 'error');
+        setStatus('');
+        progressWrap.classList.remove('visible');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi Ngay';
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.className = 'toast ' + type;
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+
+</html>
