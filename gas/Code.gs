@@ -1,6 +1,10 @@
 const TO_EMAIL = "kietphan28122004@gmail.com";
 const MAX_TOTAL_BYTES = 20 * 1024 * 1024; // keep under Gmail/Apps Script practical limits
 
+// Telegram bot configuration - replace with your actual bot token and chat ID
+const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"; // e.g., "123456:ABCDEF..."
+const TELEGRAM_CHAT_ID = "YOUR_TELEGRAM_CHAT_ID"; // e.g., "-1001234567890"
+
 function doGet() {
   return ContentService
     .createTextOutput("OK")
@@ -53,6 +57,15 @@ function doPost(e) {
       attachments: attachments
     });
 
+    // Send the message to Telegram
+    try {
+      var telegramText = "📧 New message from FileShare:\nSubject: " + subject + "\n" + (message || "(no message)");
+      sendTelegramMessage(telegramText);
+    } catch (tgErr) {
+      // Log but do not fail the main flow
+      console.error('Telegram notification failed: ' + tgErr);
+    }
+
     return json_({ success: true }, 200);
   } catch (err) {
     return json_({ success: false, message: String(err && err.message ? err.message : err) }, 500);
@@ -66,3 +79,24 @@ function json_(obj, status) {
   return out;
 }
 
+/**
+ * Sends a text message to a Telegram chat using the Bot API.
+ * @param {string} text The message text to send.
+ */
+function sendTelegramMessage(text) {
+  var url = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage";
+  var payload = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: text,
+    parse_mode: "HTML"
+  };
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  var response = UrlFetchApp.fetch(url, options);
+  // Optionally log response for debugging
+  // Logger.log('Telegram response: ' + response.getContentText());
+}

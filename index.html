@@ -153,7 +153,7 @@
 
     .tg-header-label {
       font-size: 12px;
-      color: var(--muted);
+      color: rgba(0,0,0,0.6);
       text-transform: uppercase;
       letter-spacing: .8px;
       font-weight: 500;
@@ -163,7 +163,7 @@
     .tg-refresh {
       background: none;
       border: none;
-      color: var(--muted);
+      color: rgba(0,0,0,0.5);
       cursor: pointer;
       padding: 2px;
       border-radius: 6px;
@@ -187,70 +187,96 @@
     }
 
     .tg-messages {
-      max-height: 200px;
+      max-height: 450px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px
+      gap: 12px;
+      padding: 15px;
+      scroll-behavior: smooth;
+      background: linear-gradient(135deg, #d4e5d9 0%, #e8f0e8 100%);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(108, 99, 255, 0.1);
     }
 
     .tg-messages::-webkit-scrollbar {
       width: 4px
     }
 
-    .tg-messages::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 2px
+    .tg-msg {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px 15px 15px 4px;
+      padding: 10px 14px;
+      max-width: 75%;
+      align-self: flex-start;
+      border: none;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
-    .tg-msg {
-      background: rgba(255, 255, 255, .04);
-      border-radius: 10px;
-      padding: 8px 12px
+    .tg-msg.sent {
+      background: rgba(144, 238, 144, 0.7);
+      border-radius: 15px 15px 4px 15px;
+      align-self: flex-end;
+      color: #333;
     }
 
     .tg-msg-text {
-      font-size: 13.5px;
-      color: var(--text);
+      font-size: 14.5px;
+      color: #333;
       line-height: 1.5;
       word-break: break-word
     }
 
+    .sent .tg-msg-text { color: #1a1a1a; }
+
     .tg-msg-time {
-      font-size: 11px;
-      color: #44445a;
-      margin-top: 3px
+      font-size: 10px;
+      color: rgba(0,0,0,0.5);
+      margin-top: 4px;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
     }
 
-    .tg-empty {
-      font-size: 13px;
-      color: #44445a;
-      text-align: center;
-      padding: 10px 0;
-      font-style: italic
+    .sent .tg-msg-time { color: rgba(0,0,0,0.6); }
+
+    .tg-msg-user {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 6px;
+      display: none;
+      letter-spacing: 0.5px;
+    }
+
+    .sent .tg-msg-user {
+      display: none;
     }
 
     .tg-msg-img {
       max-width: 100%;
-      max-height: 180px;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      margin-top: 6px;
       display: block;
-      transition: opacity .2s, transform .2s;
-      object-fit: cover
-    }
-
-    .tg-msg-img:hover {
-      opacity: .88;
-      transform: scale(1.01)
+      margin-bottom: 5px;
     }
 
     .tg-msg-caption {
-      font-size: 12.5px;
-      color: var(--muted);
-      margin-top: 4px;
-      font-style: italic
+      font-size: 13px;
+      color: rgba(0,0,0,0.7);
+      margin-top: 5px;
+    }
+
+    .tg-empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: rgba(0,0,0,0.5);
+      font-size: 14px;
+      font-style: italic;
     }
 
     /* Lightbox */
@@ -323,7 +349,7 @@
     }
 
     .field {
-      margin-bottom: 20px
+      margin-bottom: 24px
     }
 
     label {
@@ -358,6 +384,61 @@
 
     textarea::placeholder {
       color: #44445a
+    }
+
+    .message-input-group {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .message-input-group textarea {
+      flex: 1;
+      min-height: 90px;
+    }
+
+    .message-send-btn {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .message-send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(108, 99, 255, .4);
+    }
+
+    .message-send-btn:active {
+      transform: translateY(0);
+    }
+
+    .message-send-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message-send-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .drop-zone {
@@ -679,7 +760,15 @@
 
       <div class="field">
         <label>Ní nhắn gì thì ghi vô đây è kkk</label>
-        <textarea id="message" placeholder="Ní nhập chỗ ây è..."></textarea>
+        <div class="message-input-group">
+          <textarea id="message" placeholder="Ní nhập chỗ ây è..."></textarea>
+          <button class="message-send-btn" id="messageSendBtn" onclick="sendMessage()" title="Gửi tin nhắn">
+            <svg viewBox="0 0 24 24">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="field">
@@ -729,73 +818,116 @@
     const CHAT_ID = '7986934932';
     let selectedFiles = [];
 
-    // Load Telegram messages
     let hiddenIds = JSON.parse(localStorage.getItem('hiddenIds') || '[]');
+    let sentLocalMessages = JSON.parse(localStorage.getItem('sentLocalMessages') || '[]');
 
     async function loadMessages() {
       try {
-        const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=50');
+        // Reload sentLocalMessages from localStorage to ensure latest data
+        sentLocalMessages = JSON.parse(localStorage.getItem('sentLocalMessages') || '[]');
+        
+        const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=100');
         const data = await res.json();
         const box = document.getElementById('tgMessages');
+        
+        if (!box) {
+          console.error('Phần tử tgMessages không tìm thấy');
+          return;
+        }
+        
+        const currentScroll = box.scrollTop + box.clientHeight;
+        const isNearBottom = currentScroll >= box.scrollHeight - 50;
 
-        // Lấy tất cả tin nhắn từ CHAT_ID (text + ảnh)
-        const allUpdates = (data.result || [])
-          .filter(u => u.message && u.message.chat.id == CHAT_ID);
+        // 1. Get incoming messages from Telegram (all senders)
+        const telegramUpdates = (data.result || [])
+          .filter(u => u.message)
+          .filter(u => !hiddenIds.includes(u.update_id))
+          .filter(u => !(u.message.text && u.message.text.trim() === '/clear'))
+          .map(u => ({
+            id: 'tg_' + u.update_id,
+            date: u.message.date,
+            text: u.message.text,
+            photo: u.message.photo,
+            caption: u.message.caption,
+            type: 'received'
+          }));
 
-        // Xử lý lệnh /clear (chỉ áp dụng cho text)
-        const textMsgs = allUpdates.filter(u => u.message.text);
-        const clearCmd = textMsgs.filter(u => u.message.text.trim() === '/clear').pop();
-        if (clearCmd) {
-          const clearTime = clearCmd.message.date;
-          const toHide = allUpdates
-            .filter(u => u.message.date <= clearTime)
-            .map(u => u.update_id);
+        // 2. Clear sentLocalMessages if we found a /clear command
+        const hasClear = (data.result || []).some(u => u.message && u.message.text && u.message.text.trim() === '/clear');
+        if(hasClear) {
+          sentLocalMessages = [];
+          localStorage.setItem('sentLocalMessages', '[]');
+          const clearCmd = (data.result || []).filter(u => u.message && u.message.text && u.message.text.trim() === '/clear').pop();
+          const toHide = (data.result || []).filter(u => u.message && u.message.date <= clearCmd.message.date).map(u => u.update_id);
           hiddenIds = [...new Set([...hiddenIds, ...toHide])];
           localStorage.setItem('hiddenIds', JSON.stringify(hiddenIds));
         }
 
-        // Lọc bỏ hiddenIds và /clear, lấy 6 tin mới nhất
-        const msgs = allUpdates
-          .filter(u => !hiddenIds.includes(u.update_id))
-          .filter(u => !(u.message.text && u.message.text.trim() === '/clear'))
-          .filter(u => u.message.text || u.message.photo) // chỉ hiện text và ảnh
-          .slice(-6).reverse();
+        // 3. Combine with local sent messages
+        let allMsgs = [...telegramUpdates, ...sentLocalMessages.map(m => ({...m, type: 'sent'}))];
+        allMsgs.sort((a, b) => a.date - b.date);
 
-        if (msgs.length === 0) {
+        if (allMsgs.length === 0) {
           box.innerHTML = '<div class="tg-empty">Chưa có tin nhắn nào.</div>';
           return;
         }
 
-        box.innerHTML = '';
-        for (const u of msgs) {
-          const d = new Date(u.message.date * 1000);
-          const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN');
-          const div = document.createElement('div');
-          div.className = 'tg-msg';
-
-          if (u.message.photo) {
-            // Lấy ảnh chất lượng cao nhất (phần tử cuối)
-            const photo = u.message.photo[u.message.photo.length - 1];
-            const fileRes = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getFile?file_id=' + photo.file_id);
-            const fileData = await fileRes.json();
-            const imgUrl = 'https://api.telegram.org/file/bot' + BOT_TOKEN + '/' + fileData.result.file_path;
-            const caption = u.message.caption ? '<div class="tg-msg-caption">📝 ' + escapeHtml(u.message.caption) + '</div>' : '';
-            div.innerHTML = '<img class="tg-msg-img" src="' + imgUrl + '" alt="Ảnh" onclick="openLightbox(this.src)"/>' + caption + '<div class="tg-msg-time">📷 ' + time + '</div>';
+        let newHtml = '';
+        for (const m of allMsgs) {
+          const d = new Date(m.date * 1000);
+          const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          const statusIcon = m.type === 'sent' ? ' <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>' : '';
+          const userLabel = '';
+          
+          let content = '';
+          if (m.photo) {
+            content = `<div class="tg-msg-text">📷 Đang tải...</div><div class="tg-msg-time">${time}${statusIcon}</div>`;
           } else {
-            div.innerHTML = '<div class="tg-msg-text">' + escapeHtml(u.message.text) + '</div><div class="tg-msg-time">' + time + '</div>';
+            content = `<div class="tg-msg-text">${escapeHtml(m.text || '')}</div><div class="tg-msg-time">${time}${statusIcon}</div>`;
           }
-
-          box.appendChild(div);
+          newHtml += `<div class="tg-msg ${m.type}" data-msg-id="${m.id}">${content}</div>`;
         }
 
-      } catch (e) {
-        document.getElementById('tgMessages').innerHTML = '<div class="tg-empty">Không thể tải tin nhắn.</div>';
-      }
+        box.innerHTML = newHtml;
+        box.dataset.lastCount = allMsgs.length;
+        reprocessPhotoMessages(allMsgs);
+        
+        if (isNearBottom || !box.dataset.initialized) {
+          setTimeout(() => { box.scrollTop = box.scrollHeight; }, 100);
+          box.dataset.initialized = "true";
+        }
+
+      } catch (e) { console.error('Lỗi loadMessages:', e); }
+    }
+
+    async function reprocessPhotoMessages(msgs) {
+      const box = document.getElementById('tgMessages');
+      msgs.forEach(async (m) => {
+        if (m.photo) {
+          const div = box.querySelector(`[data-msg-id="${m.id}"]`);
+          if (!div || div.dataset.loaded) return;
+          
+          const photo = m.photo[m.photo.length - 1];
+          try {
+            const fileRes = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getFile?file_id=' + photo.file_id);
+            const fileData = await fileRes.json();
+            if (fileData.ok) {
+              const imgUrl = 'https://api.telegram.org/file/bot' + BOT_TOKEN + '/' + fileData.result.file_path;
+              const d = new Date(m.date * 1000);
+              const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+              const caption = m.caption ? `<div class="tg-msg-caption">${escapeHtml(m.caption)}</div>` : '';
+              div.innerHTML = `<img class="tg-msg-img" src="${imgUrl}" onclick="openLightbox(this.src)"/>${caption}<div class="tg-msg-time">${time}</div>`;
+              div.dataset.loaded = "true";
+            }
+          } catch(e) {}
+        }
+      });
     }
 
     function escapeHtml(t) {
       return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+
 
     function openLightbox(src) {
       document.getElementById('lbImg').src = src;
@@ -927,10 +1059,42 @@
 
     // ── Gửi tin nhắn text ────────────────────────────────────────────────────
     async function sendTelegram(text) {
-      await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
-      });
+      try {
+        await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
+        });
+      } catch(err) { console.error('Lỗi gửi Telegram:', err); }
+      
+      // Lưu vào bộ nhớ cục bộ để hiển thị như tin nhắn "đã gửi"
+      const msgObj = {
+        id: 'local_' + Date.now(),
+        date: Math.floor(Date.now() / 1000),
+        text: text.replace(/<b>.*?<\/b>\n?/, ''), // Loại bỏ tag <b> tiêu đề khi hiển thị lại
+        type: 'sent'
+      };
+      sentLocalMessages.push(msgObj);
+      localStorage.setItem('sentLocalMessages', JSON.stringify(sentLocalMessages));
+      await loadMessages();
+    }
+
+    // ── Gửi tin nhắn ngắn ────────────────────────────────────────────────────
+    async function sendMessage() {
+      const text = document.getElementById('message').value.trim();
+      if (!text) return showToast('Nhập tin nhắn trước!', 'error');
+
+      const btn = document.getElementById('messageSendBtn');
+      btn.disabled = true;
+
+      try {
+        await sendTelegram(text);
+        document.getElementById('message').value = '';
+        showToast('Gửi thành công!', 'success');
+      } catch (error) {
+        showToast('Lỗi gửi: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     const LIMIT_MB = 50;  // Giới hạn Telegram Bot API
@@ -1015,6 +1179,18 @@
         }
 
         showToast('✓ Đã gửi tất cả ' + total + ' file!', 'success');
+        
+        // Hiển thị thông báo gửi file vào khung chat
+        const fileMsg = {
+          id: 'local_file_' + Date.now(),
+          date: Math.floor(Date.now() / 1000),
+          text: '📎 Đã gửi ' + total + ' file' + (message ? ': ' + message : ''),
+          type: 'sent'
+        };
+        sentLocalMessages.push(fileMsg);
+        localStorage.setItem('sentLocalMessages', JSON.stringify(sentLocalMessages));
+        loadMessages();
+
         setStatus('');
         selectedFiles = [];
         renderFileList();
