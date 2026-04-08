@@ -826,8 +826,6 @@
         // Reload sentLocalMessages from localStorage to ensure latest data
         sentLocalMessages = JSON.parse(localStorage.getItem('sentLocalMessages') || '[]');
         
-        const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=100');
-        const data = await res.json();
         const box = document.getElementById('tgMessages');
         
         if (!box) {
@@ -838,32 +836,41 @@
         const currentScroll = box.scrollTop + box.clientHeight;
         const isNearBottom = currentScroll >= box.scrollHeight - 50;
 
-        // 1. Get incoming messages from Telegram (all senders)
-        const telegramUpdates = (data.result || [])
-          .filter(u => u.message)
-          .filter(u => !hiddenIds.includes(u.update_id))
-          .filter(u => !(u.message.text && u.message.text.trim() === '/clear'))
-          .map(u => ({
-            id: 'tg_' + u.update_id,
-            date: u.message.date,
-            text: u.message.text,
-            photo: u.message.photo,
-            caption: u.message.caption,
-            type: 'received'
-          }));
+        // Try to fetch from Telegram, but fallback to local messages if it fails
+        let telegramUpdates = [];
+        try {
+          const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=100');
+          const data = await res.json();
+          
+          telegramUpdates = (data.result || [])
+            .filter(u => u.message)
+            .filter(u => !hiddenIds.includes(u.update_id))
+            .filter(u => !(u.message.text && u.message.text.trim() === '/clear'))
+            .map(u => ({
+              id: 'tg_' + u.update_id,
+              date: u.message.date,
+              text: u.message.text,
+              photo: u.message.photo,
+              caption: u.message.caption,
+              type: 'received'
+            }));
 
-        // 2. Clear sentLocalMessages if we found a /clear command
-        const hasClear = (data.result || []).some(u => u.message && u.message.text && u.message.text.trim() === '/clear');
-        if(hasClear) {
-          sentLocalMessages = [];
-          localStorage.setItem('sentLocalMessages', '[]');
-          const clearCmd = (data.result || []).filter(u => u.message && u.message.text && u.message.text.trim() === '/clear').pop();
-          const toHide = (data.result || []).filter(u => u.message && u.message.date <= clearCmd.message.date).map(u => u.update_id);
-          hiddenIds = [...new Set([...hiddenIds, ...toHide])];
-          localStorage.setItem('hiddenIds', JSON.stringify(hiddenIds));
+          // Handle /clear command
+          const hasClear = (data.result || []).some(u => u.message && u.message.text && u.message.text.trim() === '/clear');
+          if(hasClear) {
+            sentLocalMessages = [];
+            localStorage.setItem('sentLocalMessages', '[]');
+            const clearCmd = (data.result || []).filter(u => u.message && u.message.text && u.message.text.trim() === '/clear').pop();
+            const toHide = (data.result || []).filter(u => u.message && u.message.date <= clearCmd.message.date).map(u => u.update_id);
+            hiddenIds = [...new Set([...hiddenIds, ...toHide])];
+            localStorage.setItem('hiddenIds', JSON.stringify(hiddenIds));
+          }
+        } catch (err) {
+          console.log('Không thể fetch Telegram (có thể do CORS hoặc offline)');
+          // Fallback: chỉ dùng local messages
         }
 
-        // 3. Combine with local sent messages
+        // Combine with local sent messages
         let allMsgs = [...telegramUpdates, ...sentLocalMessages.map(m => ({...m, type: 'sent'}))];
         allMsgs.sort((a, b) => a.date - b.date);
 
