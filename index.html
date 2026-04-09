@@ -1138,6 +1138,7 @@
         proxyForm.append('file', file, file.name);
 
         const directForm = new FormData();
+        directForm.append('chat_id', CHAT_ID);
         if (caption) directForm.append('caption', caption);
         directForm.append(field, file, file.name);
 
