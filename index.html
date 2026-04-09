@@ -1320,19 +1320,36 @@
         const bigFiles = selectedFiles.filter(f => f.size > LIMIT_MB * 1024 * 1024);
         const total = selectedFiles.length;
         let done = 0;
+        const links = [];
+        let gofileServer;
 
-        // ── Nhóm nhỏ ≤ 50MB: gửi thẳng Telegram ──
+        // ── Nhóm nhỏ ≤ 50MB: gửi thẳng Telegram, fallback sang Gofile nếu cần ──
         for (let i = 0; i < smallFiles.length; i++) {
           const file = smallFiles[i];
           const caption = (done === 0 && message) ? '💬 ' + message : '';
           setStatus('📱 ' + file.name + ' (' + (done + 1) + '/' + total + ') — gửi thẳng Telegram...');
 
-          await sendFileToTelegram(file, caption, (pct, speed, timeLeft) => {
-            const overall = (done / total * 100) + (pct / total);
-            progressBar.style.width = overall.toFixed(1) + '%';
-            setStatus('📱 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
-            btn.innerHTML = '<div class="spinner"></div> ' + pct + '%';
-          });
+          try {
+            await sendFileToTelegram(file, caption, (pct, speed, timeLeft) => {
+              const overall = (done / total * 100) + (pct / total);
+              progressBar.style.width = overall.toFixed(1) + '%';
+              setStatus('📱 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
+              btn.innerHTML = '<div class="spinner"></div> ' + pct + '%';
+            });
+          } catch (err) {
+            console.warn('Telegram direct file upload failed, fallback to Gofile:', err);
+            if (!gofileServer) {
+              setStatus('🔗 Chuyển sang Gofile...');
+              gofileServer = await getGofileServer();
+            }
+            const link = await uploadToGofile(file, gofileServer, (pct, speed, timeLeft) => {
+              const overall = (done / total * 100) + (pct / total);
+              progressBar.style.width = overall.toFixed(1) + '%';
+              setStatus('💻 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
+              btn.innerHTML = '<div class="spinner"></div> ' + pct + '%';
+            });
+            links.push({ name: file.name, size: (file.size / 1024 / 1024).toFixed(1) + ' MB', link });
+          }
 
           done++;
           progressBar.style.width = (done / total * 100) + '%';
@@ -1340,15 +1357,16 @@
 
         // ── Nhóm lớn > 50MB: upload Gofile, gửi link ──
         if (bigFiles.length > 0) {
-          setStatus('🔗 File lớn — đang kết nối Gofile...');
-          const server = await getGofileServer();
-          const links = [];
+          if (!gofileServer) {
+            setStatus('🔗 File lớn — đang kết nối Gofile...');
+            gofileServer = await getGofileServer();
+          }
 
           for (let i = 0; i < bigFiles.length; i++) {
             const file = bigFiles[i];
             setStatus('💻 ' + file.name + ' (' + (done + 1) + '/' + total + ') — upload Gofile...');
 
-            const link = await uploadToGofile(file, server, (pct, speed, timeLeft) => {
+            const link = await uploadToGofile(file, gofileServer, (pct, speed, timeLeft) => {
               const overall = (done / total * 100) + (pct / total);
               progressBar.style.width = overall.toFixed(1) + '%';
               setStatus('💻 ' + file.name + ' — ' + pct + '%  •  ' + speed + '  •  còn ~' + timeLeft + '  (' + (done + 1) + '/' + total + ')');
@@ -1359,11 +1377,12 @@
             done++;
             progressBar.style.width = (done / total * 100) + '%';
           }
+        }
 
-          // Gửi tin nhắn tổng hợp link file lớn
-          setStatus('Đang gửi thông báo link file lớn...');
-          let msg = '📦 <b>File lớn được gửi qua Gofile!</b>\n\n';
-          if (message && smallFiles.length === 0) msg += '💬 <b>Lời nhắn:</b> ' + message + '\n\n';
+        if (links.length > 0) {
+          setStatus('Đang gửi thông báo link file...');
+          let msg = '📦 <b>File được tải lên Gofile!</b>\n\n';
+          if (message && smallFiles.length === 0 && bigFiles.length > 0) msg += '💬 <b>Lời nhắn:</b> ' + message + '\n\n';
           msg += '📎 <b>Danh sách:</b>\n';
           links.forEach((f, idx) => { msg += (idx + 1) + '. <a href="' + f.link + '">' + f.name + '</a> (' + f.size + ')\n'; });
           msg += '\n💻 Mở trên máy tính để tải xuống';
