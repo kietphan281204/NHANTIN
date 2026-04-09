@@ -19,6 +19,9 @@ const MAX_FILES = Number(process.env.MAX_FILES || 5);
 const MAX_TOTAL_MB = Number(process.env.MAX_TOTAL_MB || 20);
 const MAX_TOTAL_BYTES = MAX_TOTAL_MB * 1024 * 1024;
 
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
 const allowedOrigins = String(process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
@@ -143,6 +146,106 @@ app.post('/api/notify-telegram', express.json(), async (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     return jsonError(res, 500, err?.message ? String(err.message) : 'Internal error');
+  }
+});
+
+// Telegram API proxy endpoints
+app.get('/api/telegram/getUpdates', async (req, res) => {
+  try {
+    const limit = req.query.limit || 100;
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?limit=${limit}`);
+    const data = await response.json();
+    return res.json(data);
+  } catch (err) {
+    return jsonError(res, 500, err?.message || 'Internal error');
+  }
+});
+
+app.post('/api/telegram/sendMessage', express.json(), async (req, res) => {
+  try {
+    const { text, parse_mode } = req.body;
+    if (!text) return jsonError(res, 400, 'Missing text');
+
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text,
+        parse_mode: parse_mode || 'HTML'
+      })
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      return jsonError(res, 400, data.description || 'Telegram API error');
+    }
+
+    return res.json({ success: true, result: data.result });
+  } catch (err) {
+    return jsonError(res, 500, err?.message || 'Internal error');
+  }
+});
+
+app.get('/api/telegram/getFile', async (req, res) => {
+  try {
+    const fileId = req.query.file_id;
+    if (!fileId) return jsonError(res, 400, 'Missing file_id');
+
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`);
+    const data = await response.json();
+    if (!data.ok) return jsonError(res, 400, data.description || 'Telegram API error');
+
+    const downloadUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${data.result.file_path}`;
+    return res.json({ success: true, downloadUrl, result: data.result });
+  } catch (err) {
+    return jsonError(res, 500, err?.message || 'Internal error');
+  }
+});
+
+app.post('/api/telegram/sendFile', upload.single('file'), async (req, res) => {
+  try {
+    const { caption } = req.body;
+    const file = req.file;
+
+    if (!file) return jsonError(res, 400, 'Missing file');
+
+    const filename = file.originalname || 'file';
+    const ext = filename.split('.').pop().toLowerCase();
+
+    let method, field;
+    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+      method = 'sendPhoto';
+      field = 'photo';
+    } else if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+      method = 'sendVideo';
+      field = 'video';
+    } else if (['mp3', 'm4a', 'wav', 'flac'].includes(ext)) {
+      method = 'sendAudio';
+      field = 'audio';
+    } else {
+      method = 'sendDocument';
+      field = 'document';
+    }
+
+    const formData = new FormData();
+    formData.append('chat_id', TELEGRAM_CHAT_ID);
+    if (caption) formData.append('caption', caption);
+    formData.append(field, new Blob([file.buffer], { type: file.mimetype }), filename);
+
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      return jsonError(res, 400, data.description || 'Telegram API error');
+    }
+
+    return res.json({ success: true, result: data.result });
+  } catch (err) {
+    return jsonError(res, 500, err?.message || 'Internal error');
   }
 });
 

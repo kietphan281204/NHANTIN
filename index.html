@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gửi File&Tin nhắn | KietPhan</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236c63ff'/%3E%3Ctext x='50' y='58' font-size='50' text-anchor='middle' fill='%23fff' font-family='Arial, sans-serif'%3EF%3C/text%3E%3C/svg%3E" />
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
     rel="stylesheet" />
@@ -55,7 +56,7 @@
       z-index: 1;
       width: 100%;
       max-width: 100%;
-      height: 100vh;
+      min-height: 100vh;
       padding: 0;
       display: flex;
       flex-direction: column;
@@ -402,6 +403,7 @@
 
     .message-input-group textarea {
       flex: 1;
+      min-width: 0;
       min-height: 50px;
       resize: none;
     }
@@ -735,8 +737,103 @@
     }
 
     @media(max-width:480px) {
+      html, body {
+        min-height: 100%;
+        height: auto;
+      }
+
+      body {
+        padding: 12px 12px env(safe-area-inset-bottom, 20px);
+      }
+
+      .wrapper {
+        max-width: 100%;
+        padding: 0 0 32px;
+      }
+
       .card {
-        padding: 24px 20px
+        width: 100%;
+        border-radius: 24px;
+        padding: 20px 16px 28px;
+      }
+
+      .tg-box {
+        padding: 12px 14px;
+      }
+
+      .tg-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .tg-refresh {
+        align-self: flex-end;
+      }
+
+      .tg-messages {
+        max-height: 52vh;
+        padding: 10px;
+      }
+
+      .tg-msg {
+        max-width: 100%;
+        padding: 12px 14px;
+      }
+
+      .field {
+        margin-bottom: 16px;
+      }
+
+      .message-input-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .message-input-group textarea {
+        min-height: 130px;
+      }
+
+      .message-send-btn,
+      .send-btn {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .drop-zone {
+        min-height: 120px;
+        padding: 20px 14px;
+      }
+
+      .drop-zone h3 {
+        font-size: 14px;
+      }
+
+      .file-item {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .file-name {
+        flex: 1 1 100%;
+      }
+
+      .file-size {
+        flex: 1 1 auto;
+      }
+
+      .progress-wrap {
+        width: 100%;
+      }
+
+      .status-text {
+        font-size: 13px;
+      }
+
+      .toast {
+        width: calc(100% - 24px);
+        left: 12px;
+        right: 12px;
       }
     }
   </style>
@@ -772,7 +869,7 @@
         <label>Ní nhắn gì thì ghi vô đây è kkk</label>
         <div class="message-input-group">
           <textarea id="message" placeholder="Ní nhập chỗ ây è..."></textarea>
-          <button class="message-send-btn" id="messageSendBtn" onclick="sendMessage()" title="Gửi tin nhắn">
+          <button class="message-send-btn" id="messageSendBtn" onclick="sendCurrent()" title="Gửi tin nhắn hoặc file">
             <svg viewBox="0 0 24 24">
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -824,8 +921,6 @@
   </div>
 
   <script>
-    const BOT_TOKEN = '8681064766:AAG4KMSthwadIIVCllqMIW_Ag95McQgVVaI';
-    const CHAT_ID = '7986934932';
     let selectedFiles = [];
 
     let hiddenIds = JSON.parse(localStorage.getItem('hiddenIds') || '[]');
@@ -849,7 +944,7 @@
         // Try to fetch from Telegram, but fallback to local messages if it fails
         let telegramUpdates = [];
         try {
-          const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getUpdates?limit=100');
+          const res = await fetch('/api/telegram/getUpdates?limit=100');
           const data = await res.json();
           
           telegramUpdates = (data.result || [])
@@ -876,7 +971,7 @@
             localStorage.setItem('hiddenIds', JSON.stringify(hiddenIds));
           }
         } catch (err) {
-          console.log('Không thể fetch Telegram (có thể do CORS hoặc offline)');
+          console.log('Không thể fetch Telegram (có thể do server offline)');
           // Fallback: chỉ dùng local messages
         }
 
@@ -926,10 +1021,10 @@
           
           const photo = m.photo[m.photo.length - 1];
           try {
-            const fileRes = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/getFile?file_id=' + photo.file_id);
+            const fileRes = await fetch('/api/telegram/getFile?file_id=' + photo.file_id);
             const fileData = await fileRes.json();
-            if (fileData.ok) {
-              const imgUrl = 'https://api.telegram.org/file/bot' + BOT_TOKEN + '/' + fileData.result.file_path;
+            if (fileData.success && fileData.downloadUrl) {
+              const imgUrl = fileData.downloadUrl;
               const d = new Date(m.date * 1000);
               const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
               const caption = m.caption ? `<div class="tg-msg-caption">${escapeHtml(m.caption)}</div>` : '';
@@ -1004,35 +1099,28 @@
     }
 
     async function sendFileToTelegram(file, caption, onProgress) {
-      return new Promise((resolve, reject) => {
-        const { method, field } = getTelegramMethod(file.name);
-        const fd = new FormData();
-        fd.append('chat_id', CHAT_ID);
-        if (caption) fd.append('caption', caption);
-        fd.append(field, file, file.name);
-        const xhr = new XMLHttpRequest();
-        const startTime = Date.now();
-        xhr.upload.addEventListener('progress', e => {
-          if (e.lengthComputable) {
-            const pct = Math.round(e.loaded / e.total * 100);
-            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
-            const speed = e.loaded / elapsed;
-            const rem = (e.total - e.loaded) / speed;
-            const timeStr = rem < 60 ? Math.ceil(rem) + 's' : Math.ceil(rem / 60) + 'ph';
-            const speedStr = speed > 1024 * 1024 ? (speed / 1024 / 1024).toFixed(1) + ' MB/s' : (speed / 1024).toFixed(0) + ' KB/s';
-            onProgress(pct, speedStr, timeStr);
+      return new Promise(async (resolve, reject) => {
+        const formData = new FormData();
+        if (caption) formData.append('caption', caption);
+        formData.append('file', file, file.name);
+
+        try {
+          const response = await fetch('/api/telegram/sendFile', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            reject(new Error(errorData.message || 'Lỗi gửi file'));
+            return;
           }
-        });
-        xhr.onload = () => {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (data.ok) resolve(data.result);
-            else reject(new Error(data.description || 'Telegram từ chối file'));
-          } catch (e) { reject(e); }
-        };
-        xhr.onerror = () => reject(new Error('Lỗi mạng'));
-        xhr.open('POST', 'https://api.telegram.org/bot' + BOT_TOKEN + '/' + method);
-        xhr.send(fd);
+
+          const data = await response.json();
+          resolve(data.result);
+        } catch (err) {
+          reject(err);
+        }
       });
     }
 
@@ -1076,12 +1164,15 @@
 
     // ── Gửi tin nhắn text ────────────────────────────────────────────────────
     async function sendTelegram(text) {
-      try {
-        await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
-        });
-      } catch(err) { console.error('Lỗi gửi Telegram:', err); }
+      const response = await fetch('/api/telegram/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, parse_mode: 'HTML' })
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Lỗi gửi Telegram');
+      }
       
       // Lưu vào bộ nhớ cục bộ để hiển thị như tin nhắn "đã gửi"
       const msgObj = {
@@ -1112,6 +1203,10 @@
       } finally {
         btn.disabled = false;
       }
+    }
+
+    async function sendCurrent() {
+      await sendFiles();
     }
 
     const LIMIT_MB = 50;  // Giới hạn Telegram Bot API
