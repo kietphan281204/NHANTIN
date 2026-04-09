@@ -1175,20 +1175,24 @@
 
         xhr.upload.addEventListener('progress', updateProgress);
         xhr.onload = () => {
+          const responseText = xhr.responseText || '';
+          const isJson = responseText.trim().startsWith('{') || responseText.trim().startsWith('[');
+
+          if (xhr.status === 404 || xhr.status === 0 || !isJson) {
+            sendDirect();
+            return;
+          }
+
           try {
-            const data = JSON.parse(xhr.responseText);
+            const data = JSON.parse(responseText);
             if (data.ok) resolve(data.result);
             else if (xhr.status === 404) {
               sendDirect();
             } else {
-              reject(new Error(data.description || 'Telegram từ chối file'));
+              reject(new Error(data.description || data.message || 'Telegram từ chối file'));
             }
           } catch (e) {
-            if (xhr.status === 404) {
-              sendDirect();
-            } else {
-              reject(e);
-            }
+            sendDirect();
           }
         };
         xhr.onerror = () => {
