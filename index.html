@@ -921,7 +921,38 @@
   </div>
 
   <script>
+    const BOT_TOKEN = '8681064766:AAG4KMSthwadIIVCllqMIW_Ag95McQgVVaI';
+    const CHAT_ID = '7986934932';
+    const API_BASE = ''; // Set to your deployed backend URL if available
     let selectedFiles = [];
+
+    function getProxyUrl(path) {
+      if (!API_BASE) return path;
+      return API_BASE.replace(/\/+$/, '') + path;
+    }
+
+    async function proxyFetchTelegram(path, options) {
+      const url = getProxyUrl('/api/telegram' + path);
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('Proxy request failed ' + res.status);
+      return res;
+    }
+
+    async function directFetchTelegram(path, options) {
+      const url = 'https://api.telegram.org/bot' + BOT_TOKEN + path;
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('Telegram direct request failed ' + res.status);
+      return res;
+    }
+
+    async function fetchTelegram(path, options) {
+      try {
+        return await proxyFetchTelegram(path, options);
+      } catch (err) {
+        console.log('Proxy failed, fallback to direct Telegram:', err.message);
+        return await directFetchTelegram(path, options);
+      }
+    }
 
     let hiddenIds = JSON.parse(localStorage.getItem('hiddenIds') || '[]');
     let sentLocalMessages = JSON.parse(localStorage.getItem('sentLocalMessages') || '[]');
@@ -941,10 +972,10 @@
         const currentScroll = box.scrollTop + box.clientHeight;
         const isNearBottom = currentScroll >= box.scrollHeight - 50;
 
-        // Try to fetch from Telegram, but fallback to local messages if it fails
+        // Try to fetch from Telegram, first via proxy, then direct if needed
         let telegramUpdates = [];
         try {
-          const res = await fetch('/api/telegram/getUpdates?limit=100');
+          const res = await fetchTelegram('/getUpdates?limit=100');
           const data = await res.json();
           
           telegramUpdates = (data.result || [])
@@ -1021,10 +1052,11 @@
           
           const photo = m.photo[m.photo.length - 1];
           try {
-            const fileRes = await fetch('/api/telegram/getFile?file_id=' + photo.file_id);
+            const fileRes = await fetchTelegram('/getFile?file_id=' + photo.file_id);
             const fileData = await fileRes.json();
-            if (fileData.success && fileData.downloadUrl) {
-              const imgUrl = fileData.downloadUrl;
+            const fileResult = fileData.result || fileData;
+            const imgUrl = fileData.downloadUrl || ('https://api.telegram.org/file/bot' + BOT_TOKEN + '/' + fileResult.file_path);
+            if (fileData.success || fileData.ok) {
               const d = new Date(m.date * 1000);
               const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
               const caption = m.caption ? `<div class="tg-msg-caption">${escapeHtml(m.caption)}</div>` : '';
@@ -1099,28 +1131,72 @@
     }
 
     async function sendFileToTelegram(file, caption, onProgress) {
-      return new Promise(async (resolve, reject) => {
-        const formData = new FormData();
-        if (caption) formData.append('caption', caption);
-        formData.append('file', file, file.name);
+      return new Promise((resolve, reject) => {
+        const { method, field } = getTelegramMethod(file.name);
+        const proxyForm = new FormData();
+        if (caption) proxyForm.append('caption', caption);
+        proxyForm.append('file', file, file.name);
 
-        try {
-          const response = await fetch('/api/telegram/sendFile', {
-            method: 'POST',
-            body: formData
-          });
+        const directForm = new FormData();
+        if (caption) directForm.append('caption', caption);
+        directForm.append(field, file, file.name);
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            reject(new Error(errorData.message || 'Lỗi gửi file'));
-            return;
+        const startTime = Date.now();
+        let xhr = new XMLHttpRequest();
+
+        const updateProgress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
+            const speed = e.loaded / elapsed;
+            const rem = (e.total - e.loaded) / speed;
+            const timeStr = rem < 60 ? Math.ceil(rem) + 's' : Math.ceil(rem / 60) + 'ph';
+            const speedStr = speed > 1024 * 1024 ? (speed / 1024 / 1024).toFixed(1) + ' MB/s' : (speed / 1024).toFixed(0) + ' KB/s';
+            onProgress(pct, speedStr, timeStr);
           }
+        };
 
-          const data = await response.json();
-          resolve(data.result);
-        } catch (err) {
-          reject(err);
-        }
+        const sendDirect = () => {
+          xhr = new XMLHttpRequest();
+          xhr.upload.addEventListener('progress', updateProgress);
+          xhr.onload = () => {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (data.ok) resolve(data.result);
+              else reject(new Error(data.description || 'Telegram từ chối file'));
+            } catch (e) {
+              reject(e);
+            }
+          };
+          xhr.onerror = () => reject(new Error('Lỗi mạng'));
+          xhr.open('POST', 'https://api.telegram.org/bot' + BOT_TOKEN + '/' + method);
+          xhr.send(directForm);
+        };
+
+        xhr.upload.addEventListener('progress', updateProgress);
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.ok) resolve(data.result);
+            else if (xhr.status === 404) {
+              sendDirect();
+            } else {
+              reject(new Error(data.description || 'Telegram từ chối file'));
+            }
+          } catch (e) {
+            if (xhr.status === 404) {
+              sendDirect();
+            } else {
+              reject(e);
+            }
+          }
+        };
+        xhr.onerror = () => {
+          sendDirect();
+        };
+
+        xhr.open('POST', getProxyUrl('/api/telegram/sendFile'));
+        xhr.send(proxyForm);
       });
     }
 
@@ -1164,14 +1240,14 @@
 
     // ── Gửi tin nhắn text ────────────────────────────────────────────────────
     async function sendTelegram(text) {
-      const response = await fetch('/api/telegram/sendMessage', {
+      const response = await fetchTelegram('/sendMessage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, parse_mode: 'HTML' })
+        body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
       });
       const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Lỗi gửi Telegram');
+      if (!(data.success || data.ok)) {
+        throw new Error(data.message || data.description || 'Lỗi gửi Telegram');
       }
       
       // Lưu vào bộ nhớ cục bộ để hiển thị như tin nhắn "đã gửi"
